@@ -1,4 +1,4 @@
-package replacememodid.util;
+package aakb.util;
 
 public class Pair<L,R> {
     private final L left;

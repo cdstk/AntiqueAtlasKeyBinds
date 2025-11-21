@@ -1,17 +1,18 @@
-package replacememodid;
+package aakb;
+
+import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import org.spongepowered.asm.launch.MixinBootstrap;
 
 import java.util.Map;
-import org.spongepowered.asm.launch.MixinBootstrap;
-import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 
 @IFMLLoadingPlugin.MCVersion("1.12.2")
-public class ReplaceMeModNamePlugin implements IFMLLoadingPlugin {
+public class AntiqueAtlasKeyBindsPlugin implements IFMLLoadingPlugin {
 
-	public ReplaceMeModNamePlugin() {
+	public AntiqueAtlasKeyBindsPlugin() {
 		MixinBootstrap.init();
 		//False for Vanilla/Coremod mixins, true for regular mod mixins
-		//FermiumRegistryAPI.enqueueMixin(false, "mixins.replacememodid.vanilla.json");
-		//FermiumRegistryAPI.enqueueMixin(true, "mixins.replacememodid.jei.json", () -> Loader.isModLoaded("jei"));
+		//FermiumRegistryAPI.enqueueMixin(false, "mixins.aakb.vanilla.json");
+		//FermiumRegistryAPI.enqueueMixin(true, "mixins.aakb.jei.json", () -> Loader.isModLoaded("jei"));
 		//--> Replaced by @MixinConfig.MixinToggle in ForgeConfigHandler. This way is still an option for more complicated conditions
 	}
 

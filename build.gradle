@@ -57,8 +57,8 @@ dependencies {
     annotationProcessor "io.github.llamalad7:mixinextras-common:${mixin_extras_version}"
 
     implementation fg.deobf("curse.maven:fermiumbooter-${fermiumbooter_version}")
-	
-    implementation fg.deobf("curse.maven:jei-${jei_version}")
+
+    compileOnly fg.deobf("curse.maven:antique-atlas-${antiqueatlas_version}")
 }
 
 mixin {
