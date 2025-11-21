@@ -1,5 +1,6 @@
-package aakb;
+package antiqueatlaskeybinds;
 
+import fermiumbooter.FermiumRegistryAPI;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import org.spongepowered.asm.launch.MixinBootstrap;
 
@@ -10,10 +11,8 @@ public class AntiqueAtlasKeyBindsPlugin implements IFMLLoadingPlugin {
 
 	public AntiqueAtlasKeyBindsPlugin() {
 		MixinBootstrap.init();
-		//False for Vanilla/Coremod mixins, true for regular mod mixins
-		//FermiumRegistryAPI.enqueueMixin(false, "mixins.aakb.vanilla.json");
-		//FermiumRegistryAPI.enqueueMixin(true, "mixins.aakb.jei.json", () -> Loader.isModLoaded("jei"));
-		//--> Replaced by @MixinConfig.MixinToggle in ForgeConfigHandler. This way is still an option for more complicated conditions
+
+		FermiumRegistryAPI.enqueueMixin(true, "mixins.aakb.aa.json");
 	}
 
 	@Override

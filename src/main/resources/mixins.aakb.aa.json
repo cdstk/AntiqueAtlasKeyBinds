@@ -1,0 +1,19 @@
+{
+  "required": true,
+  "package": "antiqueatlaskeybinds.mixin.antiqueatlas",
+  "refmap": "mixins.antiqueatlaskeybinds.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8",
+  "mixins": [
+
+  ],
+  "injectors": {
+    "maxShiftBy": 10
+  },
+  "client": [
+    "ClientProxy_KeybindMixin",
+    "GuiAtlas_KeybindMixin",
+    "GuiComponentButtonInvoker"
+  ]
+}

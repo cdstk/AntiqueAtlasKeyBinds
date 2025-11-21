@@ -1,6 +1,6 @@
-package aakb.mixin.vanilla;
+package antiqueatlaskeybinds.mixin.vanilla;
 
-import aakb.AntiqueAtlasKeyBinds;
+import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.util.DamageSource;
 import org.apache.logging.log4j.Level;

@@ -1,6 +1,6 @@
-package aakb.handlers;
+package antiqueatlaskeybinds.handlers;
 
-import aakb.AntiqueAtlasKeyBinds;
+import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import fermiumbooter.annotations.MixinConfig;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -19,7 +19,7 @@ public class ForgeConfigHandler {
 	@Config.Name("Client Options")
 	public static final ClientConfig client = new ClientConfig();
 
-	@MixinConfig(name = AntiqueAtlasKeyBinds.MODID) //Needed on config classes that contain MixinToggles for those mixins to be added
+//	@MixinConfig(name = AntiqueAtlasKeyBinds.MODID) //Needed on config classes that contain MixinToggles for those mixins to be added
 	public static class ServerConfig {
 
 		@Config.Comment("Example server side config option")

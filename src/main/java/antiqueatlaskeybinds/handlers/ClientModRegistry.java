@@ -1,6 +1,6 @@
-package aakb.handlers;
+package antiqueatlaskeybinds.handlers;
 
-import aakb.AntiqueAtlasKeyBinds;
+import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.relauncher.Side;
 

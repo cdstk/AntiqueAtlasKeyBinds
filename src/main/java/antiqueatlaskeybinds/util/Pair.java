@@ -1,4 +1,4 @@
-package aakb.util;
+package antiqueatlaskeybinds.util;
 
 public class Pair<L,R> {
     private final L left;
