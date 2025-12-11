@@ -9,6 +9,7 @@ public class KeyHandler {
     public static KeyBinding addButtonKey;
     public static KeyBinding deleteButtonKey;
     public static KeyBinding toggleButtonKey;
+    public static KeyBinding copyDataKey;
 
     public static void initKeybind() {
         addButtonKey = new KeyBinding(
@@ -26,8 +27,14 @@ public class KeyHandler {
                 Keyboard.KEY_W,
                 "key.antiqueatlas.category"
         );
+        copyDataKey = new KeyBinding(
+                "gui.antiqueatlas.copymarkerdata",
+                Keyboard.KEY_C,
+                "key.antiqueatlas.category"
+        );
         ClientRegistry.registerKeyBinding(addButtonKey);
         ClientRegistry.registerKeyBinding(deleteButtonKey);
         ClientRegistry.registerKeyBinding(toggleButtonKey);
+        ClientRegistry.registerKeyBinding(copyDataKey);
     }
 }
