@@ -1,6 +1,8 @@
 package antiqueatlaskeybinds.client;
 
 import net.minecraft.client.settings.KeyBinding;
+import net.minecraftforge.client.settings.KeyConflictContext;
+import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import org.lwjgl.input.Keyboard;
 
@@ -9,6 +11,7 @@ public class KeyHandler {
     public static KeyBinding addButtonKey;
     public static KeyBinding deleteButtonKey;
     public static KeyBinding toggleButtonKey;
+    public static KeyBinding toggleFollowPlayer;
     public static KeyBinding copyDataKey;
 
     public static void initKeybind() {
@@ -27,14 +30,24 @@ public class KeyHandler {
                 Keyboard.KEY_W,
                 "key.antiqueatlas.category"
         );
+        toggleFollowPlayer = new KeyBinding(
+                "gui.antiqueatlas.followPlayer",
+                KeyConflictContext.UNIVERSAL,
+                KeyModifier.CONTROL,
+                Keyboard.KEY_F,
+                "key.antiqueatlas.category"
+        );
         copyDataKey = new KeyBinding(
                 "gui.antiqueatlas.copymarkerdata",
+                KeyConflictContext.UNIVERSAL,
+                KeyModifier.CONTROL,
                 Keyboard.KEY_C,
                 "key.antiqueatlas.category"
         );
         ClientRegistry.registerKeyBinding(addButtonKey);
         ClientRegistry.registerKeyBinding(deleteButtonKey);
         ClientRegistry.registerKeyBinding(toggleButtonKey);
+        ClientRegistry.registerKeyBinding(toggleFollowPlayer);
         ClientRegistry.registerKeyBinding(copyDataKey);
     }
 }
