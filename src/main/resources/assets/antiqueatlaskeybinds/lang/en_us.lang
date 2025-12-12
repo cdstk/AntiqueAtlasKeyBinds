@@ -1,3 +1,13 @@
 effects.antiqueatlaskeybinds.example=Example
 
-gui.antiqueatlas.copymarkerdata=Copy Marker Data
+commands.aakb.import.invalidusage=Invalid usage. %s  Adds all markers from the specified file for the current dimension for all atlases in inventory"
+commands.aakb.import.missingfile=Unable to find or read file: %s
+commands.aakb.import.invalidfile=File is not a markers export
+commands.aakb.import.success=Successfully imported file -> %s
+
+gui.antiqueatlas.exportmarkerdata=Export Selected Marker [SHIFT]
+
+gui.aakb.exportmarkerdata.clipboard=%s copied to Clipboard
+gui.aakb.exportmarkerdata.clipboardlabel=Marker
+gui.aakb.exportmarkerdata.exportfile=%s exported to %s
+gui.aakb.exportmarkerdata.nomarker=No marker selected

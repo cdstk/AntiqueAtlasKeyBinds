@@ -12,7 +12,7 @@ public class KeyHandler {
     public static KeyBinding deleteButtonKey;
     public static KeyBinding toggleButtonKey;
     public static KeyBinding toggleFollowPlayer;
-    public static KeyBinding copyDataKey;
+    public static KeyBinding exportMarkerKey;
 
     public static void initKeybind() {
         addButtonKey = new KeyBinding(
@@ -37,8 +37,8 @@ public class KeyHandler {
                 Keyboard.KEY_F,
                 "key.antiqueatlas.category"
         );
-        copyDataKey = new KeyBinding(
-                "gui.antiqueatlas.copymarkerdata",
+        exportMarkerKey = new KeyBinding(
+                "gui.antiqueatlas.exportmarkerdata",
                 KeyConflictContext.UNIVERSAL,
                 KeyModifier.CONTROL,
                 Keyboard.KEY_C,
@@ -48,6 +48,6 @@ public class KeyHandler {
         ClientRegistry.registerKeyBinding(deleteButtonKey);
         ClientRegistry.registerKeyBinding(toggleButtonKey);
         ClientRegistry.registerKeyBinding(toggleFollowPlayer);
-        ClientRegistry.registerKeyBinding(copyDataKey);
+        ClientRegistry.registerKeyBinding(exportMarkerKey);
     }
 }

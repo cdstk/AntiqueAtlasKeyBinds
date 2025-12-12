@@ -1,7 +1,9 @@
 package antiqueatlaskeybinds;
 
+import antiqueatlaskeybinds.command.PutMarkerImportCommand;
 import antiqueatlaskeybinds.handlers.ModRegistry;
 import antiqueatlaskeybinds.proxy.CommonProxy;
+import net.minecraftforge.client.ClientCommandHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.Instance;
 import net.minecraftforge.fml.common.SidedProxy;
@@ -18,7 +20,10 @@ public class AntiqueAtlasKeyBinds {
     public static final String NAME = "AntiqueAtlasKeyBinds";
     public static final Logger LOGGER = LogManager.getLogger();
     public static boolean completedLoading = false;
-	
+
+    public static final String MARKER_EXPORT_DIRECTORY = "/atlasmarkerexports";
+    public static final String MARKER_EXPORT_FILE_EXTENSION = ".markerexport";
+
     @SidedProxy(clientSide = "antiqueatlaskeybinds.proxy.ClientProxy", serverSide = "antiqueatlaskeybinds.proxy.CommonProxy")
     public static CommonProxy PROXY;
 	
@@ -38,6 +43,7 @@ public class AntiqueAtlasKeyBinds {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
+        ClientCommandHandler.instance.registerCommand(new PutMarkerImportCommand());
         completedLoading = true;
     }
 }

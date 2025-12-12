@@ -1,5 +1,6 @@
 package antiqueatlaskeybinds.mixin.antiqueatlas;
 
+import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.client.KeyHandler;
 import com.llamalad7.mixinextras.sugar.Local;
 import hunternif.mc.atlas.SettingsConfig;
@@ -12,11 +13,16 @@ import hunternif.mc.atlas.client.gui.core.GuiComponentButton;
 import hunternif.mc.atlas.client.gui.core.GuiCursor;
 import hunternif.mc.atlas.client.gui.core.GuiStates;
 import hunternif.mc.atlas.marker.Marker;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.util.text.event.ClickEvent;
+import org.apache.commons.io.FileUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
@@ -25,6 +31,10 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @Mixin(GuiAtlas.class)
 public class GuiAtlas_KeybindMixin extends GuiComponent {
@@ -39,29 +49,28 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
     @Shadow(remap = false) @Final private GuiStates state;
     @Shadow(remap = false) @Final private GuiStates.IState NORMAL;
 
-    @Shadow (remap = false) @Mutable
-    @Final private GuiStates.IState DELETING_MARKER;
+    @Shadow (remap = false) @Mutable @Final private GuiStates.IState DELETING_MARKER;
 
     @Shadow(remap = false) @Final private GuiCursor eraser;
     @Shadow(remap = false) private Marker hoveredMarker;
     @Shadow(remap = false) private EntityPlayer player;
 
     @Unique
-    private final GuiCursor antiqueAtlasKeyBinds$copyData = new GuiCursor();
+    private final GuiCursor antiqueAtlasKeyBinds$exportMarkerCursor = new GuiCursor();
 
     @Unique
-    private final GuiBookmarkButton antiqueAtlasKeyBinds$btnCopyMarkerData = GuiBookmarkButton_Invoker.invokeInit(1, Textures.MARKER_SCROLL, I18n.format("gui.antiqueatlas.copymarkerdata"));
+    private final GuiBookmarkButton antiqueAtlasKeyBinds$btnExportMarkerData = GuiBookmarkButton_Invoker.invokeInit(1, Textures.MARKER_SCROLL, I18n.format("gui.antiqueatlas.exportmarkerdata"));
     @Unique
-    private final GuiStates.IState COPY_MARKER_DATA = new GuiStates.IState() {
+    private final GuiStates.IState EXPORT_MARKER_DATA = new GuiStates.IState() {
         @Override
         public void onEnterState() {
-            addChild(antiqueAtlasKeyBinds$copyData);
-            antiqueAtlasKeyBinds$btnCopyMarkerData.setSelected(true);
+            addChild(antiqueAtlasKeyBinds$exportMarkerCursor);
+            antiqueAtlasKeyBinds$btnExportMarkerData.setSelected(true);
         }
         @Override
         public void onExitState() {
-            removeChild(antiqueAtlasKeyBinds$copyData);
-            antiqueAtlasKeyBinds$btnCopyMarkerData.setSelected(false);
+            removeChild(antiqueAtlasKeyBinds$exportMarkerCursor);
+            antiqueAtlasKeyBinds$btnExportMarkerData.setSelected(false);
         }
     };
 
@@ -85,20 +94,20 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
             }
         };
 
-        this.addChild(antiqueAtlasKeyBinds$btnCopyMarkerData).offsetGuiCoords(300, -5);
-        this.antiqueAtlasKeyBinds$btnCopyMarkerData.addListener(button -> {
+        this.addChild(antiqueAtlasKeyBinds$btnExportMarkerData).offsetGuiCoords(300, -5);
+        this.antiqueAtlasKeyBinds$btnExportMarkerData.addListener(button -> {
             if (this.stack != null || !SettingsConfig.gameplay.itemNeeded) {
-                if (this.state.is(COPY_MARKER_DATA)) {
+                if (this.state.is(EXPORT_MARKER_DATA)) {
                     this.selectedButton = null;
                     this.state.switchTo(NORMAL);
                 } else {
                     this.selectedButton = button;
-                    this.state.switchTo(COPY_MARKER_DATA);
+                    this.state.switchTo(EXPORT_MARKER_DATA);
                 }
             }
         });
 
-        this.antiqueAtlasKeyBinds$copyData.setTexture(Textures.BOOK, 12, 14, 2, 11);
+        this.antiqueAtlasKeyBinds$exportMarkerCursor.setTexture(Textures.BOOK, 12, 14, 2, 11);
     }
 
     @Inject(
@@ -106,28 +115,8 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
             at = @At(value = "INVOKE", target = "Lhunternif/mc/atlas/client/gui/core/GuiStates;is(Lhunternif/mc/atlas/client/gui/core/GuiStates$IState;)Z", ordinal = 4, remap = false)
     )
     private void aakb_antiqueAtlasGuiAtlas_mouseClickedCopyData(int mouseX, int mouseY, int mouseState, CallbackInfo ci, @Local boolean isMouseOverMap, @Local(name = "atlasID") int atlasID){
-        if (this.state.is(COPY_MARKER_DATA) && isMouseOverMap && mouseState == 0 && this.player.getEntityWorld().isRemote){ // If clicked on a marker, delete it:
-            if(this.hoveredMarker != null && !hoveredMarker.isGlobal()){
-                StringBuilder command = new StringBuilder();
-
-                command.append("/aaam putmarker")
-                        .append(" ").append(hoveredMarker.getX())
-                        .append(" ").append(hoveredMarker.getZ())
-                        .append(" ").append(hoveredMarker.getType());
-                if(hoveredMarker.getLabel().isEmpty()){
-                    command.append(" ").append("_");
-                    this.player.sendMessage(new TextComponentString("Marker copied to Clipboard"));
-                }
-                else {
-                    command.append(" ").append(hoveredMarker.getLabel());
-                    this.player.sendMessage(new TextComponentString("[" + I18n.format(hoveredMarker.getLabel()) + "] copied to Clipboard"));
-                }
-
-                GuiScreen.setClipboardString(command.toString());
-            }
-            else {
-                this.player.sendMessage(new TextComponentString("No marker selected"));
-            }
+        if (this.state.is(EXPORT_MARKER_DATA) && isMouseOverMap && mouseState == 0 && this.player.getEntityWorld().isRemote){ // If clicked on a marker, export it:
+            antiqueAtlasKeyBinds$doExportMarker(this.hoveredMarker, this.player);
         }
     }
 
@@ -148,8 +137,63 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
         else if(KeyHandler.toggleFollowPlayer.isActiveAndMatches(key)){
             ((GuiComponentButton_Invoker)this.btnPosition).invokeOnClick();
         }
-        else if(KeyHandler.copyDataKey.isActiveAndMatches(key)){
-            ((GuiComponentButton_Invoker)this.antiqueAtlasKeyBinds$btnCopyMarkerData).invokeOnClick();
+        else if(KeyHandler.exportMarkerKey.isActiveAndMatches(key)){
+            ((GuiComponentButton_Invoker)this.antiqueAtlasKeyBinds$btnExportMarkerData).invokeOnClick();
         }
     }
+
+    @Unique
+    private void antiqueAtlasKeyBinds$doExportMarker(Marker selectedMarker, EntityPlayer atlasPlayer){
+        if(selectedMarker != null && !selectedMarker.isGlobal()){
+            StringBuilder command = new StringBuilder();
+            String labelForMessage = selectedMarker.getLabel().isEmpty()
+                    ? I18n.format("gui.aakb.exportmarkerdata.clipboardlabel")
+                    : "[" + I18n.format(selectedMarker.getLabel()) + "]";
+            command.append("/aaam putmarker")
+                    .append(" ").append(selectedMarker.getX())
+                    .append(" ").append(selectedMarker.getZ())
+                    .append(" ").append(selectedMarker.getType());
+            if(selectedMarker.getLabel().isEmpty()){
+                command.append(" ").append("_");
+            }
+            else {
+                command.append(" ").append(selectedMarker.getLabel());
+            }
+
+            if(GuiScreen.isShiftKeyDown()){
+                File exportFolder = new File(Minecraft.getMinecraft().gameDir + AntiqueAtlasKeyBinds.MARKER_EXPORT_DIRECTORY);
+                if (!exportFolder.isDirectory()) {
+                    exportFolder.mkdir();
+                }
+                int dimension = atlasPlayer.dimension;
+                File exportMarkerFile = new File(exportFolder, "marker_data." + dimension + AntiqueAtlasKeyBinds.MARKER_EXPORT_FILE_EXTENSION);
+                if (!exportMarkerFile.isFile()){
+                    try {
+                        exportMarkerFile.createNewFile();
+                    } catch (IOException e) {
+                        AntiqueAtlasKeyBinds.LOGGER.error(e);
+                    }
+                }
+                if (exportMarkerFile.isFile() && exportMarkerFile.canWrite()) {
+                    try {
+                        FileUtils.writeStringToFile(exportMarkerFile, command + System.lineSeparator(), StandardCharsets.UTF_8, true);
+                        ITextComponent clickableLink = new TextComponentString(exportMarkerFile.getName());
+                        clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, exportMarkerFile.getAbsolutePath()));
+                        clickableLink.getStyle().setUnderlined(true);
+                        atlasPlayer.sendMessage(new TextComponentTranslation("gui.aakb.exportmarkerdata.exportfile", labelForMessage, clickableLink));
+                    } catch (IOException e) {
+                        AntiqueAtlasKeyBinds.LOGGER.error(e);
+                    }
+                }
+            }
+            else {
+                GuiScreen.setClipboardString(command.toString());
+                atlasPlayer.sendMessage(new TextComponentTranslation("gui.aakb.exportmarkerdata.clipboard", labelForMessage));
+            }
+        }
+        else {
+            atlasPlayer.sendMessage(new TextComponentTranslation("gui.aakb.exportmarkerdata.nomarker"));
+        }
+    }
+
 }
