@@ -3,7 +3,8 @@ effects.antiqueatlaskeybinds.example=Example
 commands.aakb.import.invalidusage=Invalid usage. %s  Adds all markers from the specified file for the current dimension for all atlases in inventory"
 commands.aakb.import.missingfile=Unable to find or read file: %s
 commands.aakb.import.invalidfile=File is not a markers export
-commands.aakb.import.success=Successfully imported file -> %s
+commands.aakb.import.invalidworldinfo=Failed World Info Checks: Name - %s, Dimension - %s
+commands.aakb.import.success=Successfully imported file, backed up as -> %s
 
 gui.antiqueatlas.exportmarkerdata=Export Selected Marker [SHIFT]
 

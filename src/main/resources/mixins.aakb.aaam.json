@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "antiqueatlaskeybinds.mixin",
+  "refmap": "mixins.antiqueatlaskeybinds.refmap.json",
+  "compatibilityLevel": "JAVA_8",
+  "target": "@env(DEFAULT)",
+  "minVersion": "0.8",
+  "mixins": [
+    "aaam.LibrarianMarkerHandler_Mixin"
+  ],
+  "injectors": {
+    "maxShiftBy": 10
+  },
+  "client": [
+
+  ]
+}

@@ -2,6 +2,7 @@ package antiqueatlaskeybinds.mixin.antiqueatlas;
 
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.client.KeyHandler;
+import antiqueatlaskeybinds.util.IOHelper;
 import com.llamalad7.mixinextras.sugar.Local;
 import hunternif.mc.atlas.SettingsConfig;
 import hunternif.mc.atlas.client.Textures;
@@ -145,12 +146,11 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
     @Unique
     private void antiqueAtlasKeyBinds$doExportMarker(Marker selectedMarker, EntityPlayer atlasPlayer){
         if(selectedMarker != null && !selectedMarker.isGlobal()){
-            StringBuilder command = new StringBuilder();
             String labelForMessage = selectedMarker.getLabel().isEmpty()
                     ? I18n.format("gui.aakb.exportmarkerdata.clipboardlabel")
                     : "[" + I18n.format(selectedMarker.getLabel()) + "]";
-            command.append("/aaam putmarker")
-                    .append(" ").append(selectedMarker.getX())
+            StringBuilder command = new StringBuilder("/aaam putmarker");
+            command.append(" ").append(selectedMarker.getX())
                     .append(" ").append(selectedMarker.getZ())
                     .append(" ").append(selectedMarker.getType());
             if(selectedMarker.getLabel().isEmpty()){
@@ -161,12 +161,27 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
             }
 
             if(GuiScreen.isShiftKeyDown()){
-                File exportFolder = new File(Minecraft.getMinecraft().gameDir + AntiqueAtlasKeyBinds.MARKER_EXPORT_DIRECTORY);
+                File exportFolder = new File(Minecraft.getMinecraft().gameDir + IOHelper.MARKER_EXPORT_DIRECTORY);
                 if (!exportFolder.isDirectory()) {
                     exportFolder.mkdir();
                 }
-                int dimension = atlasPlayer.dimension;
-                File exportMarkerFile = new File(exportFolder, "marker_data." + dimension + AntiqueAtlasKeyBinds.MARKER_EXPORT_FILE_EXTENSION);
+
+                String serverIdentifier = null;
+
+                if(this.mc.isSingleplayer()){
+                    serverIdentifier = this.mc.getIntegratedServer().getFolderName();
+                }
+                else if(this.mc.getConnection() != null){
+                    serverIdentifier = IOHelper.simplifyFileName(this.mc.getConnection().getNetworkManager().getRemoteAddress().toString());
+                }
+
+                File exportMarkerFile = new File(exportFolder,
+                        atlasPlayer.getName()
+                                + "." + serverIdentifier
+                                + "." + atlasPlayer.dimension
+                                + IOHelper.MARKER_EXPORT_FILE_EXTENSION
+                                + ".txt"
+                );
                 if (!exportMarkerFile.isFile()){
                     try {
                         exportMarkerFile.createNewFile();
@@ -177,7 +192,7 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
                 if (exportMarkerFile.isFile() && exportMarkerFile.canWrite()) {
                     try {
                         FileUtils.writeStringToFile(exportMarkerFile, command + System.lineSeparator(), StandardCharsets.UTF_8, true);
-                        ITextComponent clickableLink = new TextComponentString(exportMarkerFile.getName());
+                        ITextComponent clickableLink = new TextComponentString(IOHelper.MARKER_EXPORT_DIRECTORY + "/" + exportMarkerFile.getName());
                         clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, exportMarkerFile.getAbsolutePath()));
                         clickableLink.getStyle().setUnderlined(true);
                         atlasPlayer.sendMessage(new TextComponentTranslation("gui.aakb.exportmarkerdata.exportfile", labelForMessage, clickableLink));

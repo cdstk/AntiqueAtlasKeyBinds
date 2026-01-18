@@ -48,6 +48,14 @@ public class ForgeConfigHandler {
 		@Config.Comment("Example client side config option")
 		@Config.Name("Example Client Option")
 		public boolean exampleClientOption = true;
+
+		@Config.Comment("Marker to use for Golden Bookwryms")
+		@Config.Name("Bookwrym Key Marker")
+		public String bookwrymKeyMarker = "antiqueatlas:diamond";
+
+		@Config.Comment("Example client side config option")
+		@Config.Name("Import Command Date Format")
+		public String importSDF = "yyyy-MM-dd'T'HH-mm-ss-SSSZ";
 	}
 
 	@Mod.EventBusSubscriber(modid = AntiqueAtlasKeyBinds.MODID)

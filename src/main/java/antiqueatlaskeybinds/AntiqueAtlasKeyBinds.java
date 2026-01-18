@@ -21,9 +21,6 @@ public class AntiqueAtlasKeyBinds {
     public static final Logger LOGGER = LogManager.getLogger();
     public static boolean completedLoading = false;
 
-    public static final String MARKER_EXPORT_DIRECTORY = "/atlasmarkerexports";
-    public static final String MARKER_EXPORT_FILE_EXTENSION = ".markerexport";
-
     @SidedProxy(clientSide = "antiqueatlaskeybinds.proxy.ClientProxy", serverSide = "antiqueatlaskeybinds.proxy.CommonProxy")
     public static CommonProxy PROXY;
 	

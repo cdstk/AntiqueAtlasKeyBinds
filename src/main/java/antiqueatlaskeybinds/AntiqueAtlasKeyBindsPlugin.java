@@ -13,6 +13,7 @@ public class AntiqueAtlasKeyBindsPlugin implements IFMLLoadingPlugin {
 		MixinBootstrap.init();
 
 		FermiumRegistryAPI.enqueueMixin(true, "mixins.aakb.aa.json");
+		FermiumRegistryAPI.enqueueMixin(true, "mixins.aakb.aaam.json");
 	}
 
 	@Override

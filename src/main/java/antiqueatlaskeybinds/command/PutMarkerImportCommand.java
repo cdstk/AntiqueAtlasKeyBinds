@@ -1,6 +1,8 @@
 package antiqueatlaskeybinds.command;
 
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
+import antiqueatlaskeybinds.handlers.ForgeConfigHandler;
+import antiqueatlaskeybinds.util.IOHelper;
 import hunternif.mc.atlas.api.AtlasAPI;
 import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandException;
@@ -24,8 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -55,12 +59,34 @@ public class PutMarkerImportCommand implements ICommand {
         if(!(sender instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) sender;
         if (args.length < 2) throw new CommandException("commands.aakb.import.invalidusage", this.getUsage(sender));
+        StringBuilder importDir = new StringBuilder(args[1]);
 
-        File importMarkerFile = new File(Minecraft.getMinecraft().gameDir.toString() + args[1]);
+        // cleanup any spaced args
+        for(int i = 2; i < args.length; i++) importDir.append(" ").append(args[i]);
+        if(importDir.indexOf("'") == 0)  importDir.deleteCharAt(0);
+        if(importDir.lastIndexOf("'") == importDir.length() - 1) importDir.deleteCharAt(importDir.length() - 1);
+
+        File importMarkerFile = new File(Minecraft.getMinecraft().gameDir.toString() + importDir);
         if(!importMarkerFile.exists() || !importMarkerFile.canRead())
-            throw new CommandException("commands.aakb.import.missingfile", args[1]);
-        if(!importMarkerFile.getAbsolutePath().endsWith(AntiqueAtlasKeyBinds.MARKER_EXPORT_FILE_EXTENSION))
+            throw new CommandException("commands.aakb.import.missingfile", importDir);
+        if(!importMarkerFile.getAbsolutePath().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
             throw new CommandException("commands.aakb.import.invalidfile");
+
+        String[] worldCheck = importMarkerFile.getName().split("\\.");
+        if(worldCheck.length < 4) throw new CommandException("commands.aakb.import.invalidfile");
+
+        boolean invalidWorld = true;
+        boolean invalidDimension = !worldCheck[2].equals(String.valueOf(player.dimension));
+
+        if(Minecraft.getMinecraft().isSingleplayer()){
+            invalidWorld = !worldCheck[1].equals(Minecraft.getMinecraft().getIntegratedServer().getFolderName());
+        }
+        else if(Minecraft.getMinecraft().getConnection() != null){
+            AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Socket Address: {}", Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress());
+            invalidWorld = !worldCheck[1].equals(IOHelper.simplifyFileName(Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress().toString()));
+        }
+
+        if(invalidWorld || invalidDimension) throw new CommandException("commands.aakb.import.invalidworldinfo", invalidWorld, invalidDimension);
 
         try {
             for(String line : FileUtils.readLines(importMarkerFile, StandardCharsets.UTF_8)){
@@ -85,7 +111,8 @@ public class PutMarkerImportCommand implements ICommand {
             }
 
             Path source = Paths.get(importMarkerFile.getAbsolutePath());
-            Path destination = source.resolveSibling(importMarkerFile.getName() + "." + System.currentTimeMillis() + ".txt");
+            SimpleDateFormat sdf = new SimpleDateFormat(ForgeConfigHandler.client.importSDF);
+            Path destination = source.resolveSibling(importMarkerFile.getName().replace(IOHelper.MARKER_EXPORT_FILE_EXTENSION,"." + sdf.format(new Date(System.currentTimeMillis()))));
             Files.move(source, destination);
 
             ITextComponent clickableLink = new TextComponentString(destination.getFileName().toString());
@@ -112,12 +139,12 @@ public class PutMarkerImportCommand implements ICommand {
             //return CommandBase.getListOfStringsMatchingLastWord(args, completions); //only needed once there's multiple commands
         }
         else if(args.length == 2) {
-            File importDir = new File(Minecraft.getMinecraft().gameDir + AntiqueAtlasKeyBinds.MARKER_EXPORT_DIRECTORY);
+            File importDir = new File(Minecraft.getMinecraft().gameDir + IOHelper.MARKER_EXPORT_DIRECTORY);
             if(importDir.isDirectory()) {
                 try (Stream<Path> paths = Files.walk(importDir.toPath())) {
                     paths.filter(Files::isRegularFile)
-                            .filter(path -> path.getFileName().toString().endsWith(AntiqueAtlasKeyBinds.MARKER_EXPORT_FILE_EXTENSION))
-                            .forEach(path -> completions.add(AntiqueAtlasKeyBinds.MARKER_EXPORT_DIRECTORY + "/" + path.getFileName()));
+                            .filter(path -> path.getFileName().toString().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
+                            .forEach(path -> completions.add("'" + IOHelper.MARKER_EXPORT_DIRECTORY + "/" + path.getFileName() + "'"));
                 } catch (IOException e) {
                     AntiqueAtlasKeyBinds.LOGGER.error(e);
                 }
