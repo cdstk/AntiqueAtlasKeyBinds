@@ -31,8 +31,7 @@ public abstract class LibrarianMarkerHandler_Mixin {
 
     @ModifyExpressionValue(
             method = "onKeyPressed",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;isPressed()Z"),
-            remap = false
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/settings/KeyBinding;isPressed()Z")
     )
     private static boolean aakb_aaamLibrarianMarkerHandler_onKeyPressedDown(boolean isPressed){
         return isPressed || librarianKey.isKeyDown();
