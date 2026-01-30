@@ -3,12 +3,17 @@ package antiqueatlaskeybinds.command;
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.handlers.ForgeConfigHandler;
 import antiqueatlaskeybinds.util.IOHelper;
+import hunternif.mc.atlas.AntiqueAtlasMod;
+import hunternif.mc.atlas.RegistrarAntiqueAtlas;
 import hunternif.mc.atlas.api.AtlasAPI;
+import hunternif.mc.atlas.registry.MarkerRegistry;
 import net.minecraft.client.Minecraft;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -59,69 +64,159 @@ public class PutMarkerImportCommand implements ICommand {
         if(!(sender instanceof EntityPlayer)) return;
         EntityPlayer player = (EntityPlayer) sender;
         if (args.length < 2) throw new CommandException("commands.aakb.import.invalidusage", this.getUsage(sender));
-        StringBuilder importDir = new StringBuilder(args[1]);
 
-        // cleanup any spaced args
-        for(int i = 2; i < args.length; i++) importDir.append(" ").append(args[i]);
-        if(importDir.indexOf("'") == 0)  importDir.deleteCharAt(0);
-        if(importDir.lastIndexOf("'") == importDir.length() - 1) importDir.deleteCharAt(importDir.length() - 1);
+        if("importmarkers".equals(args[0])){
+            StringBuilder importDir = new StringBuilder(args[1]);
+            // cleanup any spaced args
+            for(int i = 2; i < args.length; i++) importDir.append(" ").append(args[i]);
+            if(importDir.indexOf("'") == 0)  importDir.deleteCharAt(0);
+            if(importDir.lastIndexOf("'") == importDir.length() - 1) importDir.deleteCharAt(importDir.length() - 1);
 
-        File importMarkerFile = new File(Minecraft.getMinecraft().gameDir.toString() + importDir);
-        if(!importMarkerFile.exists() || !importMarkerFile.canRead())
-            throw new CommandException("commands.aakb.import.missingfile", importDir);
-        if(!importMarkerFile.getAbsolutePath().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
-            throw new CommandException("commands.aakb.import.invalidfile");
+            File importMarkerFile = new File(Minecraft.getMinecraft().gameDir.toString() + importDir);
+            if(!importMarkerFile.exists() || !importMarkerFile.canRead())
+                throw new CommandException("commands.aakb.import.missingfile", importDir);
+            if(!importMarkerFile.getAbsolutePath().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
+                throw new CommandException("commands.aakb.import.invalidfile");
 
-        String[] worldCheck = importMarkerFile.getName().split("\\.");
-        if(worldCheck.length < 4) throw new CommandException("commands.aakb.import.invalidfile");
+            String[] worldCheck = importMarkerFile.getName().split("\\.");
+            if(worldCheck.length < 4) throw new CommandException("commands.aakb.import.invalidfile");
 
-        boolean invalidWorld = true;
-        boolean invalidDimension = !worldCheck[2].equals(String.valueOf(player.dimension));
+            boolean invalidWorld = true;
+            boolean invalidDimension = !worldCheck[2].equals(String.valueOf(player.dimension));
 
-        if(Minecraft.getMinecraft().isSingleplayer()){
-            invalidWorld = !worldCheck[1].equals(Minecraft.getMinecraft().getIntegratedServer().getFolderName());
-        }
-        else if(Minecraft.getMinecraft().getConnection() != null){
-            AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Socket Address: {}", Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress());
-            invalidWorld = !worldCheck[1].equals(IOHelper.simplifyFileName(Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress().toString()));
-        }
-
-        if(invalidWorld || invalidDimension) throw new CommandException("commands.aakb.import.invalidworldinfo", invalidWorld, invalidDimension);
-
-        try {
-            for(String line : FileUtils.readLines(importMarkerFile, StandardCharsets.UTF_8)){
-                try {
-                    String[] putmarker = line.split(" ");
-                    if (putmarker.length < 6) throw new IllegalArgumentException();
-
-                    int x = Integer.parseInt(putmarker[2]);
-                    int z = Integer.parseInt(putmarker[3]);
-
-                    String type = putmarker[4].contains(":") ? putmarker[4] : "antiqueatlas:" + putmarker[3];
-
-                    StringBuilder label = new StringBuilder(putmarker[5]);
-                    for (int i = 6; i < putmarker.length; i++) label.append(" ").append(putmarker[i]);
-
-                    AtlasAPI.getPlayerAtlases(player).forEach(atlasId ->
-                            AtlasAPI.getMarkerAPI().putMarker(player.world, true, atlasId, type, label.toString(), x, z)
-                    );
-                } catch (IllegalArgumentException e) {
-                    AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Skipping invalid put marker entry: {}", line);
-                }
+            if(Minecraft.getMinecraft().isSingleplayer()){
+                invalidWorld = !worldCheck[1].equals(Minecraft.getMinecraft().getIntegratedServer().getFolderName());
+            }
+            else if(Minecraft.getMinecraft().getConnection() != null){
+                AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Socket Address: {}", Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress());
+                invalidWorld = !worldCheck[1].equals(IOHelper.simplifyFileName(Minecraft.getMinecraft().getConnection().getNetworkManager().getRemoteAddress().toString()));
             }
 
-            Path source = Paths.get(importMarkerFile.getAbsolutePath());
-            SimpleDateFormat sdf = new SimpleDateFormat(ForgeConfigHandler.client.importSDF);
-            Path destination = source.resolveSibling(importMarkerFile.getName().replace(IOHelper.MARKER_EXPORT_FILE_EXTENSION,"." + sdf.format(new Date(System.currentTimeMillis()))));
-            Files.move(source, destination);
+            if(invalidWorld || invalidDimension) throw new CommandException("commands.aakb.import.invalidworldinfo", invalidWorld, invalidDimension);
 
-            ITextComponent clickableLink = new TextComponentString(destination.getFileName().toString());
-            clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, destination.toString()));
-            clickableLink.getStyle().setUnderlined(true);
-            sender.sendMessage(new TextComponentTranslation("commands.aakb.import.success", clickableLink));
+            try {
+                for(String line : FileUtils.readLines(importMarkerFile, StandardCharsets.UTF_8)){
+                    try {
+                        String[] putmarker = line.split(" ");
+                        if (putmarker.length < 6) throw new IllegalArgumentException();
 
-        } catch (IOException e) {
-            AntiqueAtlasKeyBinds.LOGGER.error(e);
+                        int x = Integer.parseInt(putmarker[2]);
+                        int z = Integer.parseInt(putmarker[3]);
+
+                        String type = putmarker[4].contains(":") ? putmarker[4] : "antiqueatlas:" + putmarker[3];
+
+                        StringBuilder label = new StringBuilder(putmarker[5]);
+                        for (int i = 6; i < putmarker.length; i++) label.append(" ").append(putmarker[i]);
+
+                        AtlasAPI.getPlayerAtlases(player).forEach(atlasId ->
+                                AtlasAPI.getMarkerAPI().putMarker(player.world, true, atlasId, type, label.toString(), x, z)
+                        );
+                    } catch (IllegalArgumentException e) {
+                        AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Skipping invalid put marker entry: {}", line);
+                    }
+                }
+
+                Path source = Paths.get(importMarkerFile.getAbsolutePath());
+                SimpleDateFormat sdf = new SimpleDateFormat(ForgeConfigHandler.client.importSDF);
+                Path destination = source.resolveSibling(importMarkerFile.getName().replace(IOHelper.MARKER_EXPORT_FILE_EXTENSION,"." + sdf.format(new Date(System.currentTimeMillis()))));
+                Files.move(source, destination);
+
+                ITextComponent clickableLink = new TextComponentString(destination.getFileName().toString());
+                clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_FILE, destination.toString()));
+                clickableLink.getStyle().setUnderlined(true);
+                sender.sendMessage(new TextComponentTranslation("commands.aakb.import.success", clickableLink));
+
+            } catch (IOException e) {
+                AntiqueAtlasKeyBinds.LOGGER.error(e);
+            }   
+        } else if ("removemarkers".equals(args[0])) {
+            if (args.length < 4) throw new CommandException("commands.aakb.remove.invalidusage", this.getUsage(sender));
+
+            if(!MarkerRegistry.hasKey(args[1])) throw new CommandException("commands.aakb.remove.invalidmarker", args[1]);
+            String markerMatch = args[1];
+            StringBuilder labelMatch = new StringBuilder(args[2]);
+            if(labelMatch.indexOf("'") == 0)  labelMatch.deleteCharAt(0);
+            if(labelMatch.lastIndexOf("'") == labelMatch.length() - 1) labelMatch.deleteCharAt(labelMatch.length() - 1);
+
+            final int range;
+            try {
+                range = Integer.parseInt(args[3]);
+            }
+            catch (NumberFormatException e) {
+                throw new CommandException("commands.aakb.remove.invalidusage", this.getUsage(sender));
+            }
+
+            List<Integer> atlases = AtlasAPI.getPlayerAtlases(player);
+            if(atlases.isEmpty()) throw new CommandException("commands.aakb.remove.missingatlas");
+
+            for(int atlasID : atlases) {
+                AntiqueAtlasMod.markersData
+                        .getMarkersData(atlasID, player.world)
+                        .getMarkersDataInDimension(player.world.provider.getDimension())
+                        .getAllMarkers()
+                        .stream()
+                        .filter(marker -> Math.abs(marker.getX() - player.posX) < range && Math.abs(marker.getZ() - player.posZ) < range)
+                        .filter(marker -> marker.getType().equals(markerMatch))
+                        .filter(marker -> labelMatch.toString().equals("*") || marker.getLabel().contentEquals(labelMatch))
+                        .forEach(marker -> AtlasAPI.getMarkerAPI().deleteMarker(player.world, atlasID, marker.getId()));
+            }
+
+            sender.sendMessage(new TextComponentTranslation("commands.aakb.remove.success"));
+        } else if ("comparemarkers".equals(args[0])) {
+            if (args.length < 3) throw new CommandException("commands.aakb.compare.invalidusage", this.getUsage(sender));
+
+            int leftID = -1;
+            int rightID = -1;
+            try {
+                if(!args[1].equals("~")) leftID = Integer.parseInt(args[1]);
+                if(!args[2].equals("~")) rightID = Integer.parseInt(args[2]);
+            }
+            catch (NumberFormatException e) {
+                throw new CommandException("commands.aakb.compare.invalidusage", this.getUsage(sender));
+            }
+
+            ItemStack leftAtlas = null;
+            ItemStack rightAtlas = null;
+            Minecraft mc = Minecraft.getMinecraft();
+            for(ItemStack stack : mc.player.inventory.offHandInventory){
+                if(stack.getItem().equals(RegistrarAntiqueAtlas.ATLAS)){
+                    if(leftAtlas == null){
+                        if(leftID == -1) leftAtlas = stack;
+                        else if(stack.getItemDamage() == leftID) leftAtlas = stack;
+                    }
+                    if(rightAtlas == null && stack != leftAtlas){
+                        if(rightID == -1) rightAtlas = stack;
+                        else if(stack.getItemDamage() == rightID) rightAtlas = stack;
+                    }
+                    if(leftAtlas != null && rightAtlas != null){
+                        break;
+                    }
+                }
+            }
+            for(ItemStack stack : mc.player.inventory.mainInventory) {
+                if(stack.getItem().equals(RegistrarAntiqueAtlas.ATLAS)){
+                    if(leftAtlas == null){
+                        if(leftID == -1) leftAtlas = stack;
+                        else if(stack.getItemDamage() == leftID) leftAtlas = stack;
+                    }
+                    if(rightAtlas == null && stack != leftAtlas){
+                        if(rightID == -1) rightAtlas = stack;
+                        else if(stack.getItemDamage() == rightID) rightAtlas = stack;
+                    }
+                    if(leftAtlas != null && rightAtlas != null){
+                        break;
+                    }
+                }
+            }
+            AntiqueAtlasKeyBinds.PROXY.setAtlasCompareTo(rightAtlas);
+            if(leftAtlas != null && AntiqueAtlasKeyBinds.PROXY.getComparingAtlas() != null){
+//                mc.player.closeScreen();
+//                AntiqueAtlasMod.proxy.openAtlasGUI(leftAtlas);
+                sender.sendMessage(new TextComponentTranslation("commands.aakb.compare.success", leftAtlas.getItemDamage(), rightAtlas.getItemDamage()));
+            }
+            else {
+                sender.sendMessage(new TextComponentTranslation("commands.aakb.compare.missingatlas"));
+            }
         }
     }
 
@@ -135,21 +230,49 @@ public class PutMarkerImportCommand implements ICommand {
     public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
-            completions.add("importmarkers");
+            return CommandBase.getListOfStringsMatchingLastWord(args, "importmarkers", "removemarkers", "comparemarkers");
+//            completions.add("importmarkers");
             //return CommandBase.getListOfStringsMatchingLastWord(args, completions); //only needed once there's multiple commands
         }
         else if(args.length == 2) {
-            File importDir = new File(Minecraft.getMinecraft().gameDir + IOHelper.MARKER_EXPORT_DIRECTORY);
-            if(importDir.isDirectory()) {
-                try (Stream<Path> paths = Files.walk(importDir.toPath())) {
-                    paths.filter(Files::isRegularFile)
-                            .filter(path -> path.getFileName().toString().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
-                            .forEach(path -> completions.add("'" + IOHelper.MARKER_EXPORT_DIRECTORY + "/" + path.getFileName() + "'"));
-                } catch (IOException e) {
-                    AntiqueAtlasKeyBinds.LOGGER.error(e);
+            if("importmarkers".equals(args[0])){
+                File importDir = new File(Minecraft.getMinecraft().gameDir + IOHelper.MARKER_EXPORT_DIRECTORY);
+                if(importDir.isDirectory()) {
+                    try (Stream<Path> paths = Files.walk(importDir.toPath())) {
+                        paths.filter(Files::isRegularFile)
+                                .filter(path -> path.getFileName().toString().contains(IOHelper.MARKER_EXPORT_FILE_EXTENSION))
+                                .forEach(path -> completions.add("'" + IOHelper.MARKER_EXPORT_DIRECTORY + "/" + path.getFileName() + "'"));
+                        return CommandBase.getListOfStringsMatchingLastWord(args, completions);
+                    } catch (IOException e) {
+                        AntiqueAtlasKeyBinds.LOGGER.error(e);
+                    }
                 }
             }
+            else if("removemarkers".equals(args[0])){
+                return CommandBase.getListOfStringsMatchingLastWord(args, MarkerRegistry.getKeys());
+            }
+            else if("comparemarkers".equals(args[0])){
+                return CommandBase.getListOfStringsMatchingLastWord(args, "~");
+            }
         }
+        else if(args.length == 3){
+            if("removemarkers".equals(args[0])){
+                return CommandBase.getListOfStringsMatchingLastWord(args, "*");
+            }
+            else if("comparemarkers".equals(args[0])){
+                return CommandBase.getListOfStringsMatchingLastWord(args, "~");
+            }
+        }
+        else if(args.length == 4){
+            if("removemarkers".equals(args[0])){
+                return CommandBase.getListOfStringsMatchingLastWord(args, "16", "32", "64");
+            }
+        }
+//        else if(args.length == 5){
+//            if("removemarkers".equals(args[0])){
+//                return CommandBase.getListOfStringsMatchingLastWord(args, "true", "false");
+//            }
+//        }
         return completions;
     }
 

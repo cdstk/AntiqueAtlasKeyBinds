@@ -17,29 +17,32 @@ public class KeyHandler {
     public static void initKeybind() {
         addButtonKey = new KeyBinding(
                 "gui.antiqueatlas.addMarker",
+                KeyConflictContext.GUI,
                 Keyboard.KEY_A,
                 "key.antiqueatlas.category"
         );
         deleteButtonKey = new KeyBinding(
                 "gui.antiqueatlas.delMarker",
+                KeyConflictContext.GUI,
                 Keyboard.KEY_D,
                 "key.antiqueatlas.category"
         );
         toggleButtonKey = new KeyBinding(
                 "gui.antiqueatlas.hideMarkers",
+                KeyConflictContext.GUI,
                 Keyboard.KEY_W,
                 "key.antiqueatlas.category"
         );
         toggleFollowPlayer = new KeyBinding(
                 "gui.antiqueatlas.followPlayer",
-                KeyConflictContext.UNIVERSAL,
+                KeyConflictContext.GUI,
                 KeyModifier.CONTROL,
                 Keyboard.KEY_F,
                 "key.antiqueatlas.category"
         );
         exportMarkerKey = new KeyBinding(
                 "gui.antiqueatlas.exportmarkerdata",
-                KeyConflictContext.UNIVERSAL,
+                KeyConflictContext.GUI,
                 KeyModifier.CONTROL,
                 Keyboard.KEY_C,
                 "key.antiqueatlas.category"

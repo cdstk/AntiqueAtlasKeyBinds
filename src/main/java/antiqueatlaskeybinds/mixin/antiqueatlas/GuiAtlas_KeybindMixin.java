@@ -2,6 +2,8 @@ package antiqueatlaskeybinds.mixin.antiqueatlas;
 
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.client.KeyHandler;
+import antiqueatlaskeybinds.network.PacketExportPutMarker;
+import antiqueatlaskeybinds.network.PacketHandler;
 import antiqueatlaskeybinds.util.IOHelper;
 import com.llamalad7.mixinextras.sugar.Local;
 import hunternif.mc.atlas.SettingsConfig;
@@ -38,7 +40,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Mixin(GuiAtlas.class)
-public class GuiAtlas_KeybindMixin extends GuiComponent {
+public abstract class GuiAtlas_KeybindMixin extends GuiComponent {
 
     @Shadow(remap = false) private ItemStack stack;
     @Shadow(remap = false) @Final private GuiBookmarkButton btnMarker;
@@ -55,6 +57,8 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
     @Shadow(remap = false) @Final private GuiCursor eraser;
     @Shadow(remap = false) private Marker hoveredMarker;
     @Shadow(remap = false) private EntityPlayer player;
+
+    @Shadow(remap = false) protected abstract int getAtlasID();
 
     @Unique
     private final GuiCursor antiqueAtlasKeyBinds$exportMarkerCursor = new GuiCursor();
@@ -200,6 +204,16 @@ public class GuiAtlas_KeybindMixin extends GuiComponent {
                         AntiqueAtlasKeyBinds.LOGGER.error(e);
                     }
                 }
+            }
+            else if(GuiScreen.isCtrlKeyDown()){
+                PacketHandler.instance.sendToServer(new PacketExportPutMarker(
+                        atlasPlayer.getName(),
+                        this.getAtlasID(),
+                        selectedMarker.getX(),
+                        selectedMarker.getZ(),
+                        selectedMarker.getType(),
+                        selectedMarker.getLabel().isEmpty() ? "_" : selectedMarker.getLabel()
+                ));
             }
             else {
                 GuiScreen.setClipboardString(command.toString());

@@ -13,7 +13,9 @@
   },
   "client": [
     "ClientProxy_KeybindMixin",
+    "GuiAtlas_CompareCopyMixin",
     "GuiAtlas_KeybindMixin",
+    "GuiAtlas_TextSearchMixin",
     "GuiBookmarkButton_Invoker",
     "GuiComponentButton_Invoker"
   ]
