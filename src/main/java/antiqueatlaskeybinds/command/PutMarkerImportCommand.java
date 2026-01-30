@@ -134,17 +134,18 @@ public class PutMarkerImportCommand implements ICommand {
 
             if(!MarkerRegistry.hasKey(args[1])) throw new CommandException("commands.aakb.remove.invalidmarker", args[1]);
             String markerMatch = args[1];
-            StringBuilder labelMatch = new StringBuilder(args[2]);
-            if(labelMatch.indexOf("'") == 0)  labelMatch.deleteCharAt(0);
-            if(labelMatch.lastIndexOf("'") == labelMatch.length() - 1) labelMatch.deleteCharAt(labelMatch.length() - 1);
-
             final int range;
             try {
-                range = Integer.parseInt(args[3]);
+                range = Integer.parseInt(args[2]);
             }
             catch (NumberFormatException e) {
                 throw new CommandException("commands.aakb.remove.invalidusage", this.getUsage(sender));
             }
+            // cleanup any spaced args
+            StringBuilder labelMatch = new StringBuilder(args[3]);
+            for(int i = 4; i < args.length; i++) labelMatch.append(" ").append(args[i]);
+            if(labelMatch.indexOf("'") == 0)  labelMatch.deleteCharAt(0);
+            if(labelMatch.lastIndexOf("'") == labelMatch.length() - 1) labelMatch.deleteCharAt(labelMatch.length() - 1);
 
             List<Integer> atlases = AtlasAPI.getPlayerAtlases(player);
             if(atlases.isEmpty()) throw new CommandException("commands.aakb.remove.missingatlas");
@@ -257,7 +258,7 @@ public class PutMarkerImportCommand implements ICommand {
         }
         else if(args.length == 3){
             if("removemarkers".equals(args[0])){
-                return CommandBase.getListOfStringsMatchingLastWord(args, "*");
+                return CommandBase.getListOfStringsMatchingLastWord(args, "16", "32", "64");
             }
             else if("comparemarkers".equals(args[0])){
                 return CommandBase.getListOfStringsMatchingLastWord(args, "~");
@@ -265,7 +266,7 @@ public class PutMarkerImportCommand implements ICommand {
         }
         else if(args.length == 4){
             if("removemarkers".equals(args[0])){
-                return CommandBase.getListOfStringsMatchingLastWord(args, "16", "32", "64");
+                return CommandBase.getListOfStringsMatchingLastWord(args, "'*'");
             }
         }
 //        else if(args.length == 5){
