@@ -5,6 +5,8 @@ import antiqueatlaskeybinds.client.KeyHandler;
 import antiqueatlaskeybinds.network.PacketExportPutMarker;
 import antiqueatlaskeybinds.network.PacketHandler;
 import antiqueatlaskeybinds.util.IOHelper;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import hunternif.mc.atlas.SettingsConfig;
 import hunternif.mc.atlas.client.Textures;
@@ -115,13 +117,16 @@ public abstract class GuiAtlas_KeybindMixin extends GuiComponent {
         this.antiqueAtlasKeyBinds$exportMarkerCursor.setTexture(Textures.BOOK, 12, 14, 2, 11);
     }
 
-    @Inject(
+    @WrapOperation(
             method = "mouseClicked",
-            at = @At(value = "INVOKE", target = "Lhunternif/mc/atlas/client/gui/core/GuiStates;is(Lhunternif/mc/atlas/client/gui/core/GuiStates$IState;)Z", ordinal = 4, remap = false)
+            at = @At(value = "INVOKE", target = "Lhunternif/mc/atlas/client/gui/core/GuiStates;switchTo(Lhunternif/mc/atlas/client/gui/core/GuiStates$IState;)V", remap = false)
     )
-    private void aakb_antiqueAtlasGuiAtlas_mouseClickedCopyData(int mouseX, int mouseY, int mouseState, CallbackInfo ci, @Local boolean isMouseOverMap, @Local(name = "atlasID") int atlasID){
-        if (this.state.is(EXPORT_MARKER_DATA) && isMouseOverMap && mouseState == 0 && this.player.getEntityWorld().isRemote){ // If clicked on a marker, export it:
+    private void aakb_antiqueAtlasGuiAtlas_mouseClickedCopyData(GuiStates instance, GuiStates.IState state, Operation<Void> original, @Local(name = "mouseState") int mouseState, @Local boolean isMouseOverMap, @Local(name = "atlasID") int atlasID){
+        if (this.state.is(EXPORT_MARKER_DATA) && isMouseOverMap && mouseState == 0){ // If clicked on a marker, export it:
             antiqueAtlasKeyBinds$doExportMarker(this.hoveredMarker, this.player);
+        }
+        else {
+            original.call(instance, state);
         }
     }
 
@@ -216,7 +221,7 @@ public abstract class GuiAtlas_KeybindMixin extends GuiComponent {
                 ));
             }
             else {
-                GuiScreen.setClipboardString(command.toString());
+                GuiScreen.setClipboardString(IOHelper.removeFormatCharacters(command.toString()));
                 atlasPlayer.sendMessage(new TextComponentTranslation("gui.aakb.exportmarkerdata.clipboard", labelForMessage));
             }
         }

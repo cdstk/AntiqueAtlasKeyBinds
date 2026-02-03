@@ -1,6 +1,7 @@
 package antiqueatlaskeybinds.network;
 
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
+import antiqueatlaskeybinds.util.IOHelper;
 import hunternif.mc.atlas.registry.MarkerRegistry;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
@@ -93,6 +94,7 @@ public class PacketExportPutMarker implements IMessage {
                             " " + message.z +
                             " " + message.type +
                             " " + message.label;
+                    command = IOHelper.removeFormatCharacters(command);
                     ITextComponent clickableLink = new TextComponentString(message.label);
                     clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command));
                     clickableLink.getStyle().setColor(TextFormatting.AQUA);

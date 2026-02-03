@@ -11,4 +11,8 @@ public abstract class IOHelper {
                 .replace(".", "")
                 .replace(":", "");
     }
+
+    public static String removeFormatCharacters(String text){
+        return text.replaceAll("§.", "");
+    }
 }
