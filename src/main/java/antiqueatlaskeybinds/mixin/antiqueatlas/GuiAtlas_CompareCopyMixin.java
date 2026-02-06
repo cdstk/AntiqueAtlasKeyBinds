@@ -1,11 +1,11 @@
 package antiqueatlaskeybinds.mixin.antiqueatlas;
 
-import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import hunternif.mc.atlas.AntiqueAtlasMod;
+import hunternif.mc.atlas.RegistrarAntiqueAtlas;
 import hunternif.mc.atlas.SettingsConfig;
 import hunternif.mc.atlas.api.AtlasAPI;
 import hunternif.mc.atlas.client.Textures;
@@ -23,7 +23,6 @@ import net.minecraft.client.resources.I18n;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.text.TextComponentTranslation;
-import org.apache.logging.log4j.Level;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -53,6 +52,8 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
     @Shadow(remap = false) protected abstract int getAtlasID();
 
     @Unique
+    private ItemStack antiqueAtlasKeyBinds$otherStack;
+    @Unique
     private final Set<Marker> antiqueAtlasKeyBinds$uniqueMarkers = new HashSet<>();
     @Unique
     private final GuiCursor antiqueAtlasKeyBinds$compareMarkerCursor = new GuiCursor();
@@ -64,14 +65,13 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
         public void onEnterState() {
             addChild(antiqueAtlasKeyBinds$compareMarkerCursor);
             antiqueAtlasKeyBinds$btnCompareMarker.setSelected(true);
+            antiqueAtlasKeyBinds$setUniqueMarkers();
         }
         @Override
         public void onExitState() {
             removeChild(antiqueAtlasKeyBinds$compareMarkerCursor);
             antiqueAtlasKeyBinds$btnCompareMarker.setSelected(false);
-            antiqueAtlasKeyBinds$btnCompareMarker.setEnabled(false);
             antiqueAtlasKeyBinds$uniqueMarkers.clear();
-            AntiqueAtlasKeyBinds.PROXY.setAtlasCompareTo(null);
         }
     };
 
@@ -80,7 +80,7 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
             at = @At("TAIL"),
             remap = false
     )
-    public void aakb_antiqueAtlasGuiAtlas_initCancelDeleteReset(CallbackInfo ci) {
+    public void aakb_antiqueAtlasGuiAtlas_initCompareAtlasButton(CallbackInfo ci) {
         this.addChild(antiqueAtlasKeyBinds$btnCompareMarker).offsetGuiCoords(300, 94);
         this.antiqueAtlasKeyBinds$btnCompareMarker.addListener(button -> {
             if (this.stack != null && SettingsConfig.gameplay.itemNeeded) {
@@ -93,7 +93,7 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
                 }
             }
         });
-        this.antiqueAtlasKeyBinds$compareMarkerCursor.setTexture(Textures.BOOK, 12, 14, 2, 11);
+        this.antiqueAtlasKeyBinds$compareMarkerCursor.setTexture(Textures.BTN_POSITION, 12, 14, 2, 11);
     }
 
     @Inject(
@@ -101,63 +101,19 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
             at = @At("RETURN"),
             remap = false
     )
-    private void ggg(CallbackInfoReturnable<GuiAtlas> cir){
+    private void aakb_antiqueAtlasGuiAtlas_prepareToOpenCompareAtlasButton(CallbackInfoReturnable<GuiAtlas> cir){
         this.antiqueAtlasKeyBinds$uniqueMarkers.clear();
-        if(this.stack == null) return;
-
-        ItemStack rightAtlas = AntiqueAtlasKeyBinds.PROXY.getComparingAtlas();
-        this.antiqueAtlasKeyBinds$btnCompareMarker.setEnabled(rightAtlas != null);
-        if(rightAtlas != null){
-            if(this.stack == rightAtlas){
-                AntiqueAtlasKeyBinds.LOGGER.log(Level.INFO, "Warning, tried to compare with the same Atlas");
-                return;
-            }
-            DimensionMarkersData leftMarkerData = null;
-            final DimensionMarkersData rightMarkerData;
-            MarkersData markersData = AntiqueAtlasMod.markersData.getMarkersData(rightAtlas.getItemDamage(), this.player.getEntityWorld());
-            if(markersData != null){
-                rightMarkerData = markersData.getMarkersDataInDimension(this.player.dimension);
-                markersData = AntiqueAtlasMod.markersData.getMarkersData(this.getAtlasID(), this.player.getEntityWorld());
-                if(markersData != null){
-                    leftMarkerData = markersData.getMarkersDataInDimension(this.player.dimension);
-                }
-            }
-            else {
-                rightMarkerData = null;
-            }
-
-            if(leftMarkerData == null || rightMarkerData == null) return;
-
-            this.antiqueAtlasKeyBinds$uniqueMarkers.addAll(
-                leftMarkerData.getAllMarkers().stream().filter(leftMarker -> {
-                    List<Marker> rightMarkers = rightMarkerData.getMarkersAtChunk(leftMarker.getChunkX() / 8, leftMarker.getChunkZ() / 8);
-                    if(rightMarkers != null){
-                        for (Marker rightMarker : rightMarkers) {
-                            boolean typeComparison = leftMarker.getType().equals(rightMarker.getType());
-                            if(!typeComparison){
-                                if(antiqueAtlasKeyBinds$splitContext(leftMarker.getType()).length == 2 && antiqueAtlasKeyBinds$splitContext(rightMarker.getType()).length == 2){
-                                    typeComparison = antiqueAtlasKeyBinds$splitContext(leftMarker.getType())[1].equals(antiqueAtlasKeyBinds$splitContext(rightMarker.getType())[1]);
-                                }
-                            }
-                            if ((leftMarker.getX() == rightMarker.getX()
-                                    && (leftMarker.getZ() == rightMarker.getZ())
-                                    && typeComparison
-                                    && (leftMarker.getLabel().equals(rightMarker.getLabel())))
-                            )
-                                return false;
-                        }
-                    }
-                    return true;
-                }).collect(Collectors.toSet())
-            );
-        }
+        this.antiqueAtlasKeyBinds$otherStack = this.player.getHeldItemOffhand().getItem() == RegistrarAntiqueAtlas.ATLAS
+                ? this.player.getHeldItemOffhand()
+                : null;
+        this.antiqueAtlasKeyBinds$btnCompareMarker.setEnabled(antiqueAtlasKeyBinds$otherStack != null && this.stack != antiqueAtlasKeyBinds$otherStack);
     }
 
     @WrapWithCondition(
             method = "drawScreen",
             at = @At(value = "INVOKE", target = "Lhunternif/mc/atlas/client/gui/GuiAtlas;renderMarker(Lhunternif/mc/atlas/marker/Marker;D)V", remap = false)
     )
-    private boolean aaam_dontShowDisabledMarkers(GuiAtlas instance, Marker marker, double scale, @Local(name = "x") int x, @Local(name = "z") int z) {
+    private boolean aakb_antiqueAtlasGuiAtlas_drawScreenCompareAtlasMarkers(GuiAtlas instance, Marker marker, double scale, @Local(name = "x") int x, @Local(name = "z") int z) {
         if(this.state.is(COMPARE_ATLAS_MARKERS) && !this.antiqueAtlasKeyBinds$uniqueMarkers.isEmpty()){
             return this.antiqueAtlasKeyBinds$uniqueMarkers.contains(marker);
         }
@@ -168,15 +124,14 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
             method = "mouseClicked",
             at = @At(value = "INVOKE", target = "Lhunternif/mc/atlas/client/gui/core/GuiStates;switchTo(Lhunternif/mc/atlas/client/gui/core/GuiStates$IState;)V", remap = false)
     )
-    private void aakb_antiqueAtlasGuiAtlas_mouseClickedCopyData(GuiStates instance, GuiStates.IState state, Operation<Void> original, @Local(name = "mouseState") int mouseState, @Local boolean isMouseOverMap, @Local(name = "atlasID") int atlasID){
+    private void aakb_antiqueAtlasGuiAtlas_mouseClickedCopyOverMarker(GuiStates instance, GuiStates.IState state, Operation<Void> original, @Local(name = "mouseState") int mouseState, @Local boolean isMouseOverMap, @Local(name = "atlasID") int atlasID){
         if (this.state.is(COMPARE_ATLAS_MARKERS) && mouseState == 0){
             if(this.hoveredMarker != null && !this.hoveredMarker.isGlobal() && isMouseOverMap && GuiScreen.isShiftKeyDown()) { // If clicked on a marker, export it:
                 if (this.antiqueAtlasKeyBinds$uniqueMarkers.contains(this.hoveredMarker)) {
-                    ItemStack rightAtlas = AntiqueAtlasKeyBinds.PROXY.getComparingAtlas();
-                    if (rightAtlas != null) {
+                    if (antiqueAtlasKeyBinds$otherStack != null) {
                         String markerName = this.hoveredMarker.getLabel().isEmpty() ? this.hoveredMarker.getType() : this.hoveredMarker.getLocalizedLabel();
-                        this.player.sendMessage(new TextComponentTranslation("gui.aakb.comparemarker.copy", markerName, rightAtlas.getItemDamage()));
-                        AtlasAPI.getMarkerAPI().putMarker(this.player.world, true, rightAtlas.getItemDamage(), this.hoveredMarker.getType(), this.hoveredMarker.getLabel(), this.hoveredMarker.getX(), this.hoveredMarker.getZ());
+                        this.player.sendMessage(new TextComponentTranslation("gui.aakb.comparemarker.copy", markerName, antiqueAtlasKeyBinds$otherStack.getItemDamage()));
+                        AtlasAPI.getMarkerAPI().putMarker(this.player.world, true, antiqueAtlasKeyBinds$otherStack.getItemDamage(), this.hoveredMarker.getType(), this.hoveredMarker.getLabel(), this.hoveredMarker.getX(), this.hoveredMarker.getZ());
                         this.antiqueAtlasKeyBinds$uniqueMarkers.remove(this.hoveredMarker);
                     }
                 }
@@ -187,12 +142,48 @@ public abstract class GuiAtlas_CompareCopyMixin extends GuiComponent {
         }
     }
 
-    @Inject(
-            method = "onGuiClosed",
-            at = @At("HEAD")
-    )
-    private void aaa(CallbackInfo ci){
-        AntiqueAtlasKeyBinds.PROXY.setAtlasCompareTo(null);
+    @Unique
+    private void antiqueAtlasKeyBinds$setUniqueMarkers(){
+        if(this.antiqueAtlasKeyBinds$otherStack != null && this.stack != this.antiqueAtlasKeyBinds$otherStack){
+            DimensionMarkersData leftMarkerData = null;
+            final DimensionMarkersData rightMarkerData;
+            MarkersData markersData = AntiqueAtlasMod.markersData.getMarkersData(this.antiqueAtlasKeyBinds$otherStack.getItemDamage(), this.player.getEntityWorld());
+            if(markersData != null){
+                rightMarkerData = markersData.getMarkersDataInDimension(this.player.dimension);
+                markersData = AntiqueAtlasMod.markersData.getMarkersData(getAtlasID(), this.player.getEntityWorld());
+                if(markersData != null){
+                    leftMarkerData = markersData.getMarkersDataInDimension(this.player.dimension);
+                }
+            }
+            else {
+                rightMarkerData = null;
+            }
+
+            if(leftMarkerData != null && rightMarkerData != null){
+                this.antiqueAtlasKeyBinds$uniqueMarkers.addAll(
+                    leftMarkerData.getAllMarkers().stream().filter(leftMarker -> {
+                        List<Marker> rightMarkers = rightMarkerData.getMarkersAtChunk(leftMarker.getChunkX() / 8, leftMarker.getChunkZ() / 8);
+                        if(rightMarkers != null){
+                            for (Marker rightMarker : rightMarkers) {
+                                boolean typeComparison = leftMarker.getType().equals(rightMarker.getType());
+                                if(!typeComparison){
+                                    if(antiqueAtlasKeyBinds$splitContext(leftMarker.getType()).length == 2 && antiqueAtlasKeyBinds$splitContext(rightMarker.getType()).length == 2){
+                                        typeComparison = antiqueAtlasKeyBinds$splitContext(leftMarker.getType())[1].equals(antiqueAtlasKeyBinds$splitContext(rightMarker.getType())[1]);
+                                    }
+                                }
+                                if ((leftMarker.getX() == rightMarker.getX()
+                                        && (leftMarker.getZ() == rightMarker.getZ())
+                                        && typeComparison
+                                        && (leftMarker.getLabel().equals(rightMarker.getLabel())))
+                                )
+                                    return false;
+                            }
+                        }
+                        return true;
+                    }).collect(Collectors.toSet())
+                );
+            }
+        }
     }
 
     // TODO OFC Call from AAAM

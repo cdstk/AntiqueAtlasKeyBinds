@@ -2,7 +2,6 @@ package antiqueatlaskeybinds.proxy;
 
 import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.network.PacketHandler;
-import net.minecraft.item.ItemStack;
 
 public class CommonProxy {
 
@@ -11,13 +10,5 @@ public class CommonProxy {
     }
 
     public void init() {
-    }
-
-    public void setAtlasCompareTo(ItemStack rightSide){
-
-    }
-
-    public ItemStack getComparingAtlas(){
-        return null;
     }
 }

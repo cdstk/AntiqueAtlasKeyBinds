@@ -9,7 +9,6 @@ import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.world.World;
 import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -27,7 +26,6 @@ public class DefiledLandsKeyHandler {
         bookwrymKey = new KeyBinding(
                 "key.aaam.bookwrym",
                 KeyConflictContext.UNIVERSAL,
-                KeyModifier.SHIFT,
                 Keyboard.KEY_W,
                 "key.antiqueatlas.category"
         );

@@ -7,7 +7,6 @@ import io.netty.buffer.ByteBuf;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextComponentTranslation;
 import net.minecraft.util.text.TextFormatting;
 import net.minecraft.util.text.event.ClickEvent;
@@ -77,7 +76,7 @@ public class PacketExportPutMarker implements IMessage {
                     message.type,
                     message.label
                     ),
-                message.atlastID
+                ctx.getServerHandler().player.dimension
             );
         }
     }
@@ -95,7 +94,7 @@ public class PacketExportPutMarker implements IMessage {
                             " " + message.type +
                             " " + message.label;
                     command = IOHelper.removeFormatCharacters(command);
-                    ITextComponent clickableLink = new TextComponentString(message.label);
+                    ITextComponent clickableLink = new TextComponentTranslation(message.label);
                     clickableLink.getStyle().setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command));
                     clickableLink.getStyle().setColor(TextFormatting.AQUA);
                     clickableLink.getStyle().setUnderlined(true);

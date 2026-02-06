@@ -4,7 +4,6 @@ import antiqueatlaskeybinds.AntiqueAtlasKeyBinds;
 import antiqueatlaskeybinds.handlers.ForgeConfigHandler;
 import antiqueatlaskeybinds.util.IOHelper;
 import hunternif.mc.atlas.AntiqueAtlasMod;
-import hunternif.mc.atlas.RegistrarAntiqueAtlas;
 import hunternif.mc.atlas.api.AtlasAPI;
 import hunternif.mc.atlas.registry.MarkerRegistry;
 import net.minecraft.client.Minecraft;
@@ -13,7 +12,6 @@ import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
@@ -38,7 +36,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Stream;
 
-public class PutMarkerImportCommand implements ICommand {
+public class ClientAtlasCommand implements ICommand {
 
     @Override
     @Nonnull
@@ -161,63 +159,7 @@ public class PutMarkerImportCommand implements ICommand {
                         .filter(marker -> labelMatch.toString().equals("*") || marker.getLabel().contentEquals(labelMatch))
                         .forEach(marker -> AtlasAPI.getMarkerAPI().deleteMarker(player.world, atlasID, marker.getId()));
             }
-
             sender.sendMessage(new TextComponentTranslation("commands.aakb.remove.success"));
-        } else if ("comparemarkers".equals(args[0])) {
-            if (args.length < 3) throw new CommandException("commands.aakb.compare.invalidusage", this.getUsage(sender));
-
-            int leftID = -1;
-            int rightID = -1;
-            try {
-                if(!args[1].equals("~")) leftID = Integer.parseInt(args[1]);
-                if(!args[2].equals("~")) rightID = Integer.parseInt(args[2]);
-            }
-            catch (NumberFormatException e) {
-                throw new CommandException("commands.aakb.compare.invalidusage", this.getUsage(sender));
-            }
-
-            ItemStack leftAtlas = null;
-            ItemStack rightAtlas = null;
-            Minecraft mc = Minecraft.getMinecraft();
-            for(ItemStack stack : mc.player.inventory.offHandInventory){
-                if(stack.getItem().equals(RegistrarAntiqueAtlas.ATLAS)){
-                    if(leftAtlas == null){
-                        if(leftID == -1) leftAtlas = stack;
-                        else if(stack.getItemDamage() == leftID) leftAtlas = stack;
-                    }
-                    if(rightAtlas == null && stack != leftAtlas){
-                        if(rightID == -1) rightAtlas = stack;
-                        else if(stack.getItemDamage() == rightID) rightAtlas = stack;
-                    }
-                    if(leftAtlas != null && rightAtlas != null){
-                        break;
-                    }
-                }
-            }
-            for(ItemStack stack : mc.player.inventory.mainInventory) {
-                if(stack.getItem().equals(RegistrarAntiqueAtlas.ATLAS)){
-                    if(leftAtlas == null){
-                        if(leftID == -1) leftAtlas = stack;
-                        else if(stack.getItemDamage() == leftID) leftAtlas = stack;
-                    }
-                    if(rightAtlas == null && stack != leftAtlas){
-                        if(rightID == -1) rightAtlas = stack;
-                        else if(stack.getItemDamage() == rightID) rightAtlas = stack;
-                    }
-                    if(leftAtlas != null && rightAtlas != null){
-                        break;
-                    }
-                }
-            }
-            AntiqueAtlasKeyBinds.PROXY.setAtlasCompareTo(rightAtlas);
-            if(leftAtlas != null && AntiqueAtlasKeyBinds.PROXY.getComparingAtlas() != null){
-//                mc.player.closeScreen();
-//                AntiqueAtlasMod.proxy.openAtlasGUI(leftAtlas);
-                sender.sendMessage(new TextComponentTranslation("commands.aakb.compare.success", leftAtlas.getItemDamage(), rightAtlas.getItemDamage()));
-            }
-            else {
-                sender.sendMessage(new TextComponentTranslation("commands.aakb.compare.missingatlas"));
-            }
         }
     }
 
@@ -231,7 +173,7 @@ public class PutMarkerImportCommand implements ICommand {
     public List<String> getTabCompletions(@Nonnull MinecraftServer server, @Nonnull ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         List<String> completions = new ArrayList<>();
         if (args.length == 1) {
-            return CommandBase.getListOfStringsMatchingLastWord(args, "importmarkers", "removemarkers", "comparemarkers");
+            return CommandBase.getListOfStringsMatchingLastWord(args, "importmarkers", "removemarkers");
 //            completions.add("importmarkers");
             //return CommandBase.getListOfStringsMatchingLastWord(args, completions); //only needed once there's multiple commands
         }
@@ -252,16 +194,10 @@ public class PutMarkerImportCommand implements ICommand {
             else if("removemarkers".equals(args[0])){
                 return CommandBase.getListOfStringsMatchingLastWord(args, MarkerRegistry.getKeys());
             }
-            else if("comparemarkers".equals(args[0])){
-                return CommandBase.getListOfStringsMatchingLastWord(args, "~");
-            }
         }
         else if(args.length == 3){
             if("removemarkers".equals(args[0])){
                 return CommandBase.getListOfStringsMatchingLastWord(args, "16", "32", "64");
-            }
-            else if("comparemarkers".equals(args[0])){
-                return CommandBase.getListOfStringsMatchingLastWord(args, "~");
             }
         }
         else if(args.length == 4){
@@ -269,11 +205,6 @@ public class PutMarkerImportCommand implements ICommand {
                 return CommandBase.getListOfStringsMatchingLastWord(args, "'*'");
             }
         }
-//        else if(args.length == 5){
-//            if("removemarkers".equals(args[0])){
-//                return CommandBase.getListOfStringsMatchingLastWord(args, "true", "false");
-//            }
-//        }
         return completions;
     }
 

@@ -1,6 +1,6 @@
 package antiqueatlaskeybinds;
 
-import antiqueatlaskeybinds.command.PutMarkerImportCommand;
+import antiqueatlaskeybinds.command.ClientAtlasCommand;
 import antiqueatlaskeybinds.handlers.ModRegistry;
 import antiqueatlaskeybinds.proxy.CommonProxy;
 import net.minecraftforge.client.ClientCommandHandler;
@@ -40,7 +40,7 @@ public class AntiqueAtlasKeyBinds {
 
     @Mod.EventHandler
     public void postInit(FMLPostInitializationEvent event) {
-        ClientCommandHandler.instance.registerCommand(new PutMarkerImportCommand());
+        ClientCommandHandler.instance.registerCommand(new ClientAtlasCommand());
         completedLoading = true;
     }
 }
